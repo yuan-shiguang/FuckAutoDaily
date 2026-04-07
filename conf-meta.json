@@ -1,7 +1,7 @@
 {
-    "version": 64,
+    "version": 65,
     "needAppVersion": 26040712,
-    "updateLog": "新增QQ音乐简洁版听歌",
-    "md5": "4dc4bd5d09d26d354fe2489c7c4c8bc0",
-    "updateTime": "2026-04-07 23:05:41"
+    "updateLog": "修复波点音乐听歌",
+    "md5": "884bd360d0619cfd2a54f5ee407ff3de",
+    "updateTime": "2026-04-08 07:07:17"
 }
