@@ -1,6 +1,6 @@
 {
-    "versionName": "3.0.34",
-    "versionCode": 26040701,
-    "updateTime": "2026-04-07 01:04:49",
-    "updateLog": "【功能】\n- 新增 频道签到\n【体验】\n- 适配 新版配置\n【问题修复】\n- 修复 好友弹窗UI"
+    "versionName": "3.0.35",
+    "versionCode": 26040718,
+    "updateTime": "2026-04-07 18:09:46",
+    "updateLog": "【功能】\n- 新增 王者营地每日任务\n- 新增 福利社领卷\n- 新增 QQ运动步数"
 }
