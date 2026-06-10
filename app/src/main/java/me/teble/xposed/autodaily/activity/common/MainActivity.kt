@@ -72,6 +72,15 @@ class MainActivity : ComponentActivity() {
 
         const val PEEK_SERVICE = 1
         const val LOOP_PEEK_SERVICE = 2
+
+        init {
+            try {
+                System.loadLibrary("xa_native")
+            } catch (e: UnsatisfiedLinkError) {
+                Log.e("XALog", "Failed to load xa_native library", e)
+            }
+        }
+
         private val handlerThread by lazy {
             HandlerThread("CoreServiceHookThread").apply { start() }
         }
@@ -174,7 +183,11 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         handler.post(peekServiceRunnable)
         SuApi.init(this)
-        System.loadLibrary("xa_native")
+        try {
+            System.loadLibrary("xa_native")
+        } catch (e: UnsatisfiedLinkError) {
+            Log.e("XALog", "Failed to load xa_native library", e)
+        }
         setContent {
             MaterialTheme(colors = colors()) {
                 val navController = rememberNavController()
