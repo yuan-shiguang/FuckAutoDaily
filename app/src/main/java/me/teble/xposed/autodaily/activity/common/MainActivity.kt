@@ -52,6 +52,7 @@ import me.teble.xposed.autodaily.su.SuApi
 import me.teble.xposed.autodaily.su.SuConf
 import me.teble.xposed.autodaily.su.SuConfUtil
 import me.teble.xposed.autodaily.ui.ActivityView
+import me.teble.xposed.autodaily.ui.LineButton
 import me.teble.xposed.autodaily.ui.LineCheckBox
 import me.teble.xposed.autodaily.ui.LineSwitch
 import me.teble.xposed.autodaily.utils.TaskExecutor.CORE_SERVICE_FLAG
@@ -68,7 +69,6 @@ class MainActivity : ComponentActivity() {
     companion object {
         var shizukuErrInfo by mutableStateOf("")
         var shizukuDaemonRunning by mutableStateOf(false)
-        var suDaemonRunning by mutableStateOf(false)
 
         const val PEEK_SERVICE = 1
         const val LOOP_PEEK_SERVICE = 2
@@ -294,6 +294,8 @@ fun ShizukuCard() {
         }
     }
 }
+
+var suDaemonRunning by mutableStateOf(false)
 
 @Composable
 fun SuCard() {
