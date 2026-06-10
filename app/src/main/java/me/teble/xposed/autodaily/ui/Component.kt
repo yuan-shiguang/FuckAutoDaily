@@ -12,6 +12,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -54,7 +55,7 @@ fun VerticaLine(
 }
 
 @Composable
-fun AppBar(title: String) {
+fun AppBar(title: String, onSettingsClick: (() -> Unit)? = null) {
     var appInit by remember { mutableStateOf(false) }
     LaunchedEffect(Unit) {
         appInit = xaAppIsInit
@@ -65,6 +66,11 @@ fun AppBar(title: String) {
             Text(title, color = Color.White)
         },
         actions = {
+            if (onSettingsClick != null) {
+                IconButton(onClick = onSettingsClick) {
+                    Icon(Icons.Outlined.Settings, "设置", tint = Color.White)
+                }
+            }
             if (appInit) {
                 var showMenu by remember { mutableStateOf(false) }
                 var hiddenAppIcon by remember { mutableStateOf(false) }
@@ -120,6 +126,7 @@ fun AppBar(title: String) {
 @Composable
 fun ActivityView(
     title: String = "XAutoDaily",
+    onSettingsClick: (() -> Unit)? = null,
     unit: @Composable () -> Unit = {}
 ) {
     Column(
@@ -127,7 +134,7 @@ fun ActivityView(
             .fillMaxSize()
             .background(Color(0xFFF0F2F5))
     ) {
-        AppBar(title)
+        AppBar(title, onSettingsClick)
         unit()
     }
 }

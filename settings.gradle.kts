@@ -1,4 +1,4 @@
-rootProject.name = "XAutoDaily"
+rootProject.name = "FuckAutoDaily"
 include(
     ":app",
     ":dexkit",

@@ -5,9 +5,8 @@ package me.teble.xposed.autodaily.config
 
 import me.teble.xposed.autodaily.BuildConfig
 
-const val NAME = "XAutoDaily"
+const val NAME = "FuckAutoDaily"
 const val PACKAGE_NAME_QQ = "com.tencent.mobileqq"
-const val PACKAGE_NAME_TIM = "com.tencent.tim"
 const val PACKAGE_NAME_QQ_LITE = "com.tencent.qqlite"
 const val PACKAGE_NAME_QQ_INTERNATIONAL = "com.tencent.mobileqqi"
 const val JUMP_ACTIVITY = "com.tencent.mobileqq.activity.JumpActivity"

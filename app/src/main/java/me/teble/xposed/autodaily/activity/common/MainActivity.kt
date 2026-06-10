@@ -30,21 +30,27 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
 import me.teble.xposed.autodaily.BuildConfig
 import me.teble.xposed.autodaily.IUserService
 import me.teble.xposed.autodaily.activity.common.MainActivity.Companion.bindUserService
 import me.teble.xposed.autodaily.activity.common.MainActivity.Companion.startPeekRunnable
+import me.teble.xposed.autodaily.activity.module.ModuleActivity
 import me.teble.xposed.autodaily.activity.module.colors
 import me.teble.xposed.autodaily.application.xaApp
 import me.teble.xposed.autodaily.config.DataMigrationService
 import me.teble.xposed.autodaily.config.JUMP_ACTIVITY
 import me.teble.xposed.autodaily.config.PACKAGE_NAME_QQ
-import me.teble.xposed.autodaily.config.PACKAGE_NAME_TIM
 import me.teble.xposed.autodaily.hook.JumpActivityHook
 import me.teble.xposed.autodaily.hook.enums.QQTypeEnum
 import me.teble.xposed.autodaily.shizuku.ShizukuApi
 import me.teble.xposed.autodaily.shizuku.ShizukuConf
 import me.teble.xposed.autodaily.shizuku.UserService
+import me.teble.xposed.autodaily.su.SuApi
+import me.teble.xposed.autodaily.su.SuConf
+import me.teble.xposed.autodaily.su.SuConfUtil
 import me.teble.xposed.autodaily.ui.ActivityView
 import me.teble.xposed.autodaily.ui.LineCheckBox
 import me.teble.xposed.autodaily.ui.LineSwitch
@@ -62,6 +68,7 @@ class MainActivity : ComponentActivity() {
     companion object {
         var shizukuErrInfo by mutableStateOf("")
         var shizukuDaemonRunning by mutableStateOf(false)
+        var suDaemonRunning by mutableStateOf(false)
 
         const val PEEK_SERVICE = 1
         const val LOOP_PEEK_SERVICE = 2
@@ -169,12 +176,26 @@ class MainActivity : ComponentActivity() {
         System.loadLibrary("xa_native")
         setContent {
             MaterialTheme(colors = colors()) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .background(Color.White)
-                ) {
-                    ModuleView()
+                val navController = rememberNavController()
+                NavHost(navController = navController, startDestination = "home") {
+                    composable("home") {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .background(Color.White)
+                        ) {
+                            ModuleView(onSettingsClick = { navController.navigate("settings") })
+                        }
+                    }
+                    composable("settings") {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .background(Color.White)
+                        ) {
+                            SettingsView(onBackClick = { navController.popBackStack() })
+                        }
+                    }
                 }
             }
         }
@@ -274,6 +295,79 @@ fun ShizukuCard() {
     }
 }
 
+@Composable
+fun SuCard() {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(color = Color.White, shape = RoundedCornerShape(6.dp))
+            .clickable {
+                if (!SuApi.isRootAvailable || !SuApi.isRootGranted) {
+                    SuApi.checkRoot()
+                    return@clickable
+                }
+                val keepAlive = xaApp.prefs.getBoolean("SuKeepAlive", false)
+                if (!keepAlive) {
+                    Toast
+                        .makeText(xaApp, "未启用Su保活，无需启动守护进程", Toast.LENGTH_SHORT)
+                        .show()
+                    return@clickable
+                }
+                if (!suDaemonRunning) {
+                    SuApi.checkRoot()
+                    Toast
+                        .makeText(xaApp, "正在启动Su守护进程，请稍后", Toast.LENGTH_SHORT)
+                        .show()
+                } else {
+                    Toast
+                        .makeText(xaApp, "Su守护进程已停止", Toast.LENGTH_SHORT)
+                        .show()
+                }
+            }
+            .padding(24.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        if (SuApi.isRootGranted) {
+            Icon(Icons.Outlined.CheckCircle, "Su 服务正在运行")
+            Column(Modifier.padding(horizontal = 20.dp, vertical = 6.dp)) {
+                Text(
+                    text = "Su 服务正在运行 (${SuApi.suType.displayName})",
+                    fontFamily = FontFamily.Serif,
+                    color = Color.Black
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                if (!suDaemonRunning) {
+                    Text(text = "守护进程未在运行，点击运行", color = Color.Red)
+                } else {
+                    Text(text = "守护进程正在运行", color = Color.Green)
+                }
+            }
+        } else if (SuApi.isRootAvailable) {
+            Icon(Icons.Outlined.Warning, "Su 服务未授权")
+            Column(Modifier.padding(horizontal = 20.dp, vertical = 6.dp)) {
+                Text(
+                    text = "Su 已检测到但未授权",
+                    fontFamily = FontFamily.Serif,
+                    color = Color.Black
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(text = "点击此卡片进行授权", color = Color.Red)
+            }
+        } else {
+            Icon(Icons.Outlined.Warning, "Su 服务未在运行")
+            Column(Modifier.padding(horizontal = 20.dp, vertical = 6.dp)) {
+                Text(
+                    text = "Su 服务未在运行",
+                    fontFamily = FontFamily.Serif,
+                    color = Color.Black
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(text = "点击检测Root权限")
+            }
+        }
+    }
+}
+
 private fun openHostSetting(context: Context, type: QQTypeEnum) {
     val intent = Intent().apply {
         component = ComponentName(type.packageName, JUMP_ACTIVITY)
@@ -305,7 +399,7 @@ private fun SettingCard() {
                 color = Color.Black
             )
             Spacer(modifier = Modifier.height(4.dp))
-            Text(text = "请在 QQ/TIM 内进行操作")
+            Text(text = "请在 QQ 内进行操作")
             Text(text = "APP 侧滑 > 设置 > XAutoDaily")
             Spacer(modifier = Modifier.height(10.dp))
             Row {
@@ -316,13 +410,6 @@ private fun SettingCard() {
                         openHostSetting(context, QQTypeEnum.QQ)
                     }
                 )
-                Spacer(modifier = Modifier.width(20.dp))
-                Text(text = "TIM",
-                    color = Color(0xFF409EFF),
-                    modifier = Modifier.clickable {
-                        openHostSetting(context, QQTypeEnum.TIM)
-                    }
-                )
             }
         }
     }
@@ -330,8 +417,8 @@ private fun SettingCard() {
 
 @SuppressLint("MutableCollectionMutableState")
 @Composable
-fun ModuleView() {
-    ActivityView(title = "XAutoDaily") {
+fun ModuleView(onSettingsClick: () -> Unit = {}) {
+    ActivityView(title = "FuckAutoDaily", onSettingsClick = onSettingsClick) {
         var infoList by remember { mutableStateOf(listOf<String>()) }
         LaunchedEffect(ShizukuApi.isPermissionGranted) {
             infoList = if (!ShizukuApi.isPermissionGranted) {
@@ -354,6 +441,16 @@ fun ModuleView() {
         ) {
             item {
                 ShizukuCard()
+            }
+            item {
+                SuCard()
+            }
+            item {
+                LineButton(
+                    title = "FuckAutoDaily",
+                    desc = BuildConfig.VERSION_NAME,
+                    onClick = onSettingsClick
+                )
             }
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
                 item {
@@ -384,10 +481,7 @@ fun ModuleView() {
                 val qqKeepAlive = remember {
                     mutableStateOf(xaApp.prefs.getBoolean("QKeepAlive", false))
                 }
-                val timKeepAlive = remember {
-                    mutableStateOf(xaApp.prefs.getBoolean("TimKeepAlive", false))
-                }
-                LaunchedEffect(qqKeepAlive.value, timKeepAlive.value, keepAliveChecked.value) {
+                LaunchedEffect(qqKeepAlive.value, keepAliveChecked.value) {
                     val confDir = File(xaApp.getExternalFilesDir(null), "conf")
                     if (confDir.isFile) {
                         confDir.delete()
@@ -399,7 +493,6 @@ fun ModuleView() {
                     val conf = ShizukuConf(keepAliveChecked.value,
                         mutableMapOf<String, Boolean>().apply {
                             put(PACKAGE_NAME_QQ, qqKeepAlive.value)
-                            put(PACKAGE_NAME_TIM, timKeepAlive.value)
                         })
                     val confString = conf.toJsonString()
                     Log.d("XALog", confString)
@@ -415,7 +508,7 @@ fun ModuleView() {
                     LineSwitch(
                         checked = keepAliveChecked,
                         title = "是否启用shizuku保活机制",
-                        desc = "通过shizuku运行一个service，当监测到qq/tim被杀死后重新拉起进程",
+                        desc = "通过shizuku运行一个service，当监测到qq被杀死后重新拉起进程",
                         enabled = ShizukuApi.isPermissionGranted,
                         onChange = {
                             keepAliveChecked.value = it
@@ -447,23 +540,61 @@ fun ModuleView() {
                                 }
                             )
                         }
-                        if (xaApp.qPackageState.containsKey(PACKAGE_NAME_TIM)) {
+                    }
+                }
+            }
+            item {
+                val suKeepAliveChecked = remember {
+                    mutableStateOf(xaApp.prefs.getBoolean("SuKeepAlive", false))
+                }
+                val suQqKeepAlive = remember {
+                    mutableStateOf(xaApp.prefs.getBoolean("SuQKeepAlive", false))
+                }
+                LaunchedEffect(suQqKeepAlive.value, suKeepAliveChecked.value) {
+                    val conf = SuConf(suKeepAliveChecked.value,
+                        mutableMapOf<String, Boolean>().apply {
+                            put(PACKAGE_NAME_QQ, suQqKeepAlive.value)
+                        })
+                    SuConfUtil.saveConf(conf)
+                }
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(color = Color.White, shape = RoundedCornerShape(6.dp))
+                        .padding(horizontal = 10.dp, vertical = 4.dp),
+                    verticalArrangement = Arrangement.Center
+                ) {
+                    LineSwitch(
+                        checked = suKeepAliveChecked,
+                        title = "是否启用Su保活机制",
+                        desc = "通过Su运行一个service，当监测到qq被杀死后重新拉起进程",
+                        enabled = SuApi.isRootGranted,
+                        onChange = {
+                            suKeepAliveChecked.value = it
+                            xaApp.prefs.edit()
+                                .putBoolean("SuKeepAlive", it)
+                                .apply()
+                        },
+                        otherInfoList = if (!SuApi.isRootAvailable) listOf("未检测到Root") else if (!SuApi.isRootGranted) listOf("Su未授权") else listOf()
+                    )
+                    if (suKeepAliveChecked.value) {
+                        if (xaApp.qPackageState.containsKey(PACKAGE_NAME_QQ)) {
                             LineCheckBox(
-                                checked = timKeepAlive,
-                                title = "启用tim保活",
-                                desc = "单击此处尝试后台唤醒tim，如果模块hook生效将会显示一个气泡",
-                                enabled = ShizukuApi.isPermissionGranted,
+                                checked = suQqKeepAlive,
+                                title = "启用qq保活",
+                                desc = "单击此处尝试后台唤醒qq",
+                                enabled = SuApi.isRootGranted,
                                 onClick = {
-                                    ShizukuApi.startService(PACKAGE_NAME_TIM, DataMigrationService,
+                                    SuApi.startService(PACKAGE_NAME_QQ, DataMigrationService,
                                         arrayOf(
                                             "-e", CORE_SERVICE_FLAG, "$",
                                             "-e", CORE_SERVICE_TOAST_FLAG, "$"
                                         ))
                                 },
                                 onChange = {
-                                    timKeepAlive.value = it
+                                    suQqKeepAlive.value = it
                                     xaApp.prefs.edit()
-                                        .putBoolean("TimKeepAlive", it)
+                                        .putBoolean("SuQKeepAlive", it)
                                         .apply()
                                 }
                             )
@@ -473,6 +604,206 @@ fun ModuleView() {
             }
             item {
                 SettingCard()
+            }
+        }
+    }
+}
+
+@Composable
+fun SettingsView(onBackClick: () -> Unit) {
+    ActivityView(title = "设置", onSettingsClick = null) {
+        LazyColumn(
+            modifier = Modifier
+                .padding(top = 13.dp)
+                .padding(horizontal = 13.dp),
+            contentPadding = WindowInsets.Companion.navigationBars.asPaddingValues(),
+            verticalArrangement = Arrangement.spacedBy(10.dp),
+        ) {
+            item {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(color = Color.White, shape = RoundedCornerShape(6.dp))
+                        .clickable { onBackClick() }
+                        .padding(16.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(text = "← 返回主页", color = Color(0xFF409EFF))
+                }
+            }
+            item {
+                val hiddenAppIcon = remember {
+                    mutableStateOf(xaApp.prefs.getBoolean("hidden_app_icon", false))
+                }
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(color = Color.White, shape = RoundedCornerShape(6.dp))
+                        .padding(horizontal = 10.dp, vertical = 4.dp),
+                    verticalArrangement = Arrangement.Center
+                ) {
+                    LineSwitch(
+                        checked = hiddenAppIcon,
+                        title = "隐藏桌面图标",
+                        desc = "隐藏后需通过其他方式启动应用",
+                        onChange = {
+                            hiddenAppIcon.value = it
+                            xaApp.prefs.edit()
+                                .putBoolean("hidden_app_icon", it)
+                                .apply()
+                        }
+                    )
+                }
+            }
+            item {
+                val untrustedTouch = remember {
+                    mutableStateOf(xaApp.prefs.getBoolean("UntrustedTouchEvents", false))
+                }
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(color = Color.White, shape = RoundedCornerShape(6.dp))
+                        .padding(horizontal = 10.dp, vertical = 4.dp),
+                    verticalArrangement = Arrangement.Center
+                ) {
+                    LineSwitch(
+                        checked = untrustedTouch,
+                        title = "取消安卓12不受信触摸",
+                        desc = "安卓12后启用对toast弹窗等事件触摸不可穿透，勾选此项可关闭",
+                        enabled = ShizukuApi.isPermissionGranted,
+                        onChange = {
+                            ShizukuApi.setUntrustedTouchEvents(it)
+                            untrustedTouch.value = it
+                            xaApp.prefs.edit()
+                                .putBoolean("UntrustedTouchEvents", it)
+                                .apply()
+                        }
+                    )
+                }
+            }
+            item {
+                val keepAliveChecked = remember {
+                    mutableStateOf(xaApp.prefs.getBoolean("KeepAlive", false))
+                }
+                val qqKeepAlive = remember {
+                    mutableStateOf(xaApp.prefs.getBoolean("QKeepAlive", false))
+                }
+                LaunchedEffect(qqKeepAlive.value, keepAliveChecked.value) {
+                    val confDir = File(xaApp.getExternalFilesDir(null), "conf")
+                    if (confDir.isFile) {
+                        confDir.delete()
+                    }
+                    if (!confDir.exists()) {
+                        confDir.mkdirs()
+                    }
+                    val confFile = File(confDir, "conf.json")
+                    val conf = ShizukuConf(keepAliveChecked.value,
+                        mutableMapOf<String, Boolean>().apply {
+                            put(PACKAGE_NAME_QQ, qqKeepAlive.value)
+                        })
+                    confFile.writeText(conf.toJsonString())
+                }
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(color = Color.White, shape = RoundedCornerShape(6.dp))
+                        .padding(horizontal = 10.dp, vertical = 4.dp),
+                    verticalArrangement = Arrangement.Center
+                ) {
+                    LineSwitch(
+                        checked = keepAliveChecked,
+                        title = "是否启用shizuku保活机制",
+                        desc = "通过shizuku运行一个service，当监测到qq被杀死后重新拉起进程",
+                        enabled = ShizukuApi.isPermissionGranted,
+                        onChange = {
+                            keepAliveChecked.value = it
+                            xaApp.prefs.edit()
+                                .putBoolean("KeepAlive", it)
+                                .apply()
+                        }
+                    )
+                    if (keepAliveChecked.value) {
+                        if (xaApp.qPackageState.containsKey(PACKAGE_NAME_QQ)) {
+                            LineCheckBox(
+                                checked = qqKeepAlive,
+                                title = "启用qq保活",
+                                desc = "单击此处尝试后台唤醒qq",
+                                enabled = ShizukuApi.isPermissionGranted,
+                                onClick = {
+                                    ShizukuApi.startService(PACKAGE_NAME_QQ, DataMigrationService,
+                                        arrayOf(
+                                            "-e", CORE_SERVICE_FLAG, "$",
+                                            "-e", CORE_SERVICE_TOAST_FLAG, "$"
+                                        ))
+                                },
+                                onChange = {
+                                    qqKeepAlive.value = it
+                                    xaApp.prefs.edit()
+                                        .putBoolean("QKeepAlive", it)
+                                        .apply()
+                                }
+                            )
+                        }
+                    }
+                }
+            }
+            item {
+                val suKeepAliveChecked = remember {
+                    mutableStateOf(xaApp.prefs.getBoolean("SuKeepAlive", false))
+                }
+                val suQqKeepAlive = remember {
+                    mutableStateOf(xaApp.prefs.getBoolean("SuQKeepAlive", false))
+                }
+                LaunchedEffect(suQqKeepAlive.value, suKeepAliveChecked.value) {
+                    val conf = SuConf(suKeepAliveChecked.value,
+                        mutableMapOf<String, Boolean>().apply {
+                            put(PACKAGE_NAME_QQ, suQqKeepAlive.value)
+                        })
+                    SuConfUtil.saveConf(conf)
+                }
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(color = Color.White, shape = RoundedCornerShape(6.dp))
+                        .padding(horizontal = 10.dp, vertical = 4.dp),
+                    verticalArrangement = Arrangement.Center
+                ) {
+                    LineSwitch(
+                        checked = suKeepAliveChecked,
+                        title = "是否启用Su保活机制",
+                        desc = "通过Su运行一个service，当监测到qq被杀死后重新拉起进程",
+                        enabled = SuApi.isRootGranted,
+                        onChange = {
+                            suKeepAliveChecked.value = it
+                            xaApp.prefs.edit()
+                                .putBoolean("SuKeepAlive", it)
+                                .apply()
+                        }
+                    )
+                    if (suKeepAliveChecked.value) {
+                        if (xaApp.qPackageState.containsKey(PACKAGE_NAME_QQ)) {
+                            LineCheckBox(
+                                checked = suQqKeepAlive,
+                                title = "启用qq保活",
+                                desc = "单击此处尝试后台唤醒qq",
+                                enabled = SuApi.isRootGranted,
+                                onClick = {
+                                    SuApi.startService(PACKAGE_NAME_QQ, DataMigrationService,
+                                        arrayOf(
+                                            "-e", CORE_SERVICE_FLAG, "$",
+                                            "-e", CORE_SERVICE_TOAST_FLAG, "$"
+                                        ))
+                                },
+                                onChange = {
+                                    suQqKeepAlive.value = it
+                                    xaApp.prefs.edit()
+                                        .putBoolean("SuQKeepAlive", it)
+                                        .apply()
+                                }
+                            )
+                        }
+                    }
+                }
             }
         }
     }

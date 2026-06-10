@@ -17,10 +17,7 @@ object VersionUtil {
 
     val quaVersion = buildString {
         val type = QQTypeEnum.valueOfPackage(hostPackageName)
-        if (type == QQTypeEnum.TIM) {
-            append("TIM")
-            append("/$qqVersionName.$qqBuildNum")
-        } else if (type == QQTypeEnum.QQ) {
+        if (type == QQTypeEnum.QQ) {
             append("QQ")
             append("/$qqVersionName.$qqBuildNum")
         } else {

@@ -8,7 +8,7 @@
 [![Telegram](https://img.shields.io/static/v1?label=Telegram&message=Chat&color=0088cc)](https://t.me/XAutoDailyChat)
 </div>
 
-XAutoDaily 是一个兼容QQ大部分版本(包括新版TIM)的开源签到 Xposed 模块
+XAutoDaily 是一个兼容QQ大部分版本的开源签到 Xposed 模块
 
 -----
 
@@ -17,7 +17,7 @@ XAutoDaily 是一个兼容QQ大部分版本(包括新版TIM)的开源签到 Xpos
 激活本模块后，在 QQ 客户端的设置中点击 "XAutoDaily 设置" 即可开关对应功能。
 
 - Android >= 7.0
-- QQ >= 8.0.0, TIM(新版全功能支持，旧版**可能**不兼容小程序签到)
+- QQ >= 8.0.0
 
 ## 对于部分用户的特殊说明
 
