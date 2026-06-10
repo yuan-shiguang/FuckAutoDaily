@@ -1,23 +1,53 @@
 <div align="center">
-    <h1> XAutoDaily </h1>
+    <h1> FuckAutoDaily </h1>
 
 [![license](https://img.shields.io/github/license/teble/XAutoDaily.svg)](https://www.gnu.org/licenses/gpl-3.0.html)
-[![GitHub release](https://img.shields.io/github/release/teble/XAutoDaily.svg)](https://github.com/teble/XAutoDaily/releases/latest)
-[![Download](https://img.shields.io/github/downloads/Xposed-Modules-Repo/me.teble.xposed.autodaily/total)](https://github.com/LuckyPray/XAutoDaily/releases/latest)
+[![GitHub release](https://img.shields.io/github/release/teble/XAutoDaily.svg)](https://github.com/LuckyPray/FuckAutoDaily/releases/latest)
+[![Download](https://img.shields.io/github/downloads/Xposed-Modules-Repo/me.teble.xposed.autodaily/total)](https://github.com/LuckyPray/FuckAutoDaily/releases/latest)
 [![Telegram](https://img.shields.io/static/v1?label=Telegram&message=Channel&color=0088cc)](https://t.me/XAutoDaily)
 [![Telegram](https://img.shields.io/static/v1?label=Telegram&message=Chat&color=0088cc)](https://t.me/XAutoDailyChat)
 </div>
 
-XAutoDaily 是一个兼容QQ大部分版本的开源签到 Xposed 模块
+FuckAutoDaily 是一个兼容QQ大部分版本的开源签到 Xposed 模块
 
 -----
 
 ## 使用方法
 
-激活本模块后，在 QQ 客户端的设置中点击 "XAutoDaily 设置" 即可开关对应功能。
+激活本模块后，在 QQ 客户端的设置中点击 "FuckAutoDaily 设置" 即可开关对应功能。
 
 - Android >= 7.0
 - QQ >= 8.0.0
+
+## 本地构建
+
+```bash
+# 克隆项目（包含子模块）
+git clone --recursive https://github.com/LuckyPray/FuckAutoDaily.git
+cd FuckAutoDaily
+
+# 构建Release版本
+./gradlew assembleRelease
+```
+
+## GitHub Actions 构建
+
+1. Fork 本仓库
+2. 在 Settings > Secrets and variables > Actions 中添加以下 Secrets：
+   - `RELEASE_KEYSTORE_BASE64`: 签名文件的 Base64 编码
+   - `RELEASE_KEYSTORE_PASSWORD`: 签名文件密码
+   - `RELEASE_KEY_ALIAS`: 密钥别名
+   - `RELEASE_KEY_PASSWORD`: 密钥密码
+3. 在 Actions 页面手动触发 `Build Release APK` 工作流
+
+### 生成签名文件 Base64
+
+```bash
+# 将 release.jks 转换为 Base64
+base64 release.jks > keystore_base64.txt
+```
+
+将 `keystore_base64.txt` 的内容粘贴到 `RELEASE_KEYSTORE_BASE64` Secret 中。
 
 ## 对于部分用户的特殊说明
 
