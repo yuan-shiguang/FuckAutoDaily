@@ -1,12 +1,12 @@
 package me.teble.xposed.autodaily.su
 
+import android.content.Context
 import android.os.Build
 import android.util.Log
 import android.widget.Toast
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import me.teble.xposed.autodaily.application.xaApp
 import me.teble.xposed.autodaily.config.DataMigrationService
 import me.teble.xposed.autodaily.utils.TaskExecutor.CORE_SERVICE_FLAG
 import java.io.BufferedReader
@@ -18,6 +18,11 @@ object SuApi {
     var isRootGranted by mutableStateOf(false)
     var suType by mutableStateOf(SuType.UNKNOWN)
     private var rootProcess: Process? = null
+    private var context: Context? = null
+
+    fun init(ctx: Context) {
+        context = ctx
+    }
 
     enum class SuType {
         UNKNOWN,
@@ -147,7 +152,9 @@ object SuApi {
             output
         } catch (e: Exception) {
             Log.e("XALog", "Shell execution failed: $shell", e)
-            Toast.makeText(xaApp, "Su shell 执行失败", Toast.LENGTH_SHORT).show()
+            context?.let {
+                Toast.makeText(it, "Su shell 执行失败", Toast.LENGTH_SHORT).show()
+            }
             ""
         }
     }

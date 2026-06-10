@@ -173,6 +173,7 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         handler.post(peekServiceRunnable)
+        SuApi.init(this)
         System.loadLibrary("xa_native")
         setContent {
             MaterialTheme(colors = colors()) {
